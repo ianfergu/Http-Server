@@ -1,0 +1,6 @@
+get /jasleen/public_html/Courses/Spring07 HTTP/1.0
+GET /jasleen/public html/Courses/Spring07 HTTP/1.0
+GET /jasleen/public_html/Courses/Spring07 HTTP /1.0
+geT /jasleen/public_html/Courses/Spring07 HTTP/1.0
+GET /jasleen/public html/Courses/Spring07 HTTP/1.j
+GET /jasleen/public_html/Courses/Spring07 HTTFP /1.0
