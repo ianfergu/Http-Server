@@ -1,5 +1,15 @@
+#!/usr/bin/python3
+
+# Import socket module
+from socket import *
 import sys
 import string
+
+# Create a TCP server socket
+#(AF_INET is used for IPv4 protocols)
+#(SOCK_STREAM is used for TCP)
+
+
 
 
 def checkGet(inp):
@@ -83,8 +93,8 @@ def passedFunctions(inp):
         try:
             in_file = open(inp[1:], "r")
             text = in_file.readlines()
-            for lines in text:
-                print(lines[:len(lines)-1])
+            for l in text:
+                print(l[:len(l)-1])
         except FileNotFoundError:
             print("404 Not Found: " + inp)
         except IOError:
@@ -93,15 +103,19 @@ def passedFunctions(inp):
         print("501 Not Implemented: " + inp)
 
 
-def main():
+def main(new):
     """
     The main function which loops through all lines of input,
     and splits the input into lists by whitespace. It then calls
     the functions to test the tokens in the input, and prints the
     results.
     """
-    zen = sys.stdin.readlines()
-    for new in zen:
+    sys.stdout = open('memory.txt', 'wt')
+
+    stop = True
+    while stop:
+        new = ''.join(new)
+
         method = ""
         request_url = ""
         HTTP_version = ""
@@ -113,7 +127,7 @@ def main():
         # catching the case where there is a space in the Get thing.
         if new[0] == " ":
             print("ERROR -- Invalid Method token.")
-            continue
+            stop = False
         # base space case
         new = new.split()
         try:
@@ -136,6 +150,67 @@ def main():
             print("Request-URL = " + request_url)
             print("HTTP-Version = " + HTTP_version)
             passedFunctions(request_url)
+        stop = False
+
+#####################################
+# This is the main function!!!!!!!! #
+#####################################
 
 
-main()
+serverSocket = socket(AF_INET, SOCK_STREAM)
+
+# Assign a port number
+serverPort = int(sys.argv[1])
+
+# Bind the socket to server address (default this machine)
+# and server port
+try:
+    serverSocket.bind(("", serverPort))
+except (OSError):
+    print("Connection Error")
+    sys.exit()
+
+# Listen for at most 1 connection at a time
+serverSocket.listen(1)
+
+# Server should be up and running first,
+# and listening to the incoming connections
+
+while True:
+    sys.stdout = open('memory.txt', 'wt')
+    #Wait for a new connection from the client
+    #and accept it when requested
+    #a new socket for data streams is returned from
+    #the accept method
+    connectionSocket, addr = serverSocket.accept()
+
+    # Make a bidirectional stream (file-like) from socket
+    # read and write operations can be used on the stream
+    s = connectionSocket.makefile("rw")
+
+    # Receives the request message from the client
+    message = s.readline()
+
+    # Create upper case version
+    # messageCaps = message.upper()
+    main(message)
+
+    # Send back to client
+    saved = open("memory.txt", "r")
+    sys.stdout = sys.__stdout__
+    lines = saved.readlines()
+    s.write(str(len(lines)) + "\n")
+    for x in lines:
+        s.write(x)
+    s.flush()
+
+    # Close the client connection socket
+    connectionSocket.close()
+
+serverSocket.close()
+sys.exit()#Terminate the program after sending the corresponding data
+
+
+
+
+

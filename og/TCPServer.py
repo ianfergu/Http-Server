@@ -1,5 +1,55 @@
+from socket import *
 import sys
 import string
+from io import StringIO
+
+
+# output = StringIO()
+
+
+def server():
+    global output
+
+    serverSocket = socket(AF_INET, SOCK_STREAM)
+
+    serverPort = 15382
+
+    serverSocket.bind(("", serverPort))
+
+    serverSocket.listen(1)
+
+    while True:
+        print('The server is ready to receive')
+
+        # Wait for a new connection from the client
+        # and accept it when requested
+        # a new socket for data streams is returned from
+        # the accept method
+        connectionSocket, addr = serverSocket.accept()
+
+        # Make a bidirectional stream (file-like) from socket
+        # read and write operations can be used on the stream
+        s = connectionSocket.makefile("rw")
+
+        # Receives the request message from the client
+
+        message = s.readline()
+
+        # Create upper case version
+        for x in message:
+            main(x)
+        # Send back to client
+        # put whatever we want in the s.write(     )
+            s.write("hello testing")
+
+            s.write(output)
+            s.flush()
+            output = ""
+        # Close the client connection socket
+        connectionSocket.close()
+
+    serverSocket.close()
+    sys.exit()
 
 
 def checkGet(inp):
@@ -78,42 +128,57 @@ def passedFunctions(inp):
     and tries to open them. If it can't, it throws errors
     based on why not.
     """
+    global output
 
     if inp.endswith((".htm", ".txt", ".html", ".HTM", ".TXT", ".HTML")):
         try:
             in_file = open(inp[1:], "r")
             text = in_file.readlines()
             for lines in text:
-                print(lines[:len(lines)-1])
+                # print(lines[:len(lines)-1])
+                output = (output + (lines[:len(lines)-1]))
         except FileNotFoundError:
-            print("404 Not Found: " + inp)
+            # print("404 Not Found: " + inp)
+            output = (output + ("404 Not Found: " + inp))
         except IOError:
-            print(IOError)
+            # print(IOError)
+            output = (output + IOError)
     else:
-        print("501 Not Implemented: " + inp)
+        # print("501 Not Implemented: " + inp)
+        output = output + ("501 Not Implemented: " + inp)
 
 
-def main():
+def main(new):
     """
     The main function which loops through all lines of input,
     and splits the input into lists by whitespace. It then calls
     the functions to test the tokens in the input, and prints the
     results.
     """
-    zen = sys.stdin.readlines()
-    for new in zen:
+    stap = True
+    global output
+
+    while stap:
+        print("stuck")
         method = ""
         request_url = ""
         HTTP_version = ""
-        print(new, end = "")
+
+        # print(new, end = "")
+        new = ''.join(new)
+        output = (output + new)
+
         # tab case
         if new.find("\t") > 2:
             new = new.split("\t")
 
         # catching the case where there is a space in the Get thing.
         if new[0] == " ":
-            print("ERROR -- Invalid Method token.")
-            continue
+
+            # print("ERROR -- Invalid Method token.")
+            output = output + ("ERROR -- Invalid Method token.")
+
+            stap = False
         # base space case
         new = new.split()
         try:
@@ -124,18 +189,28 @@ def main():
             pass
 
         if (len(new) == 0) or ((checkGet(method)) == False):
-            print("ERROR -- Invalid Method token.")
+            # print("ERROR -- Invalid Method token.")
+            output = output + ("ERROR -- Invalid Method token.")
         elif (len(new) == 1) or ((checkURL(request_url)) == False):
-            print("ERROR -- Invalid Absolute-Path token.")
+            # print("ERROR -- Invalid Absolute-Path token.")
+            output = output + ("ERROR -- Invalid Absolute-Path token.")
         elif (len(new) == 2) or ((checkHTTP(HTTP_version)) == False):
-            print("ERROR -- Invalid HTTP-Version token.")
+            # print("ERROR -- Invalid HTTP-Version token.")
+            output = output + ("ERROR -- Invalid HTTP-Version token.")
         elif (checkSpurious(new)):
-            print("ERROR -- Spurious token before CRLF.")
+            # print("ERROR -- Spurious token before CRLF.")
+            output = output + ("ERROR -- Spurious token before CRLF.")
         else:
-            print("Method = " + method)
-            print("Request-URL = " + request_url)
-            print("HTTP-Version = " + HTTP_version)
+            # print("Method = " + method)
+            output = output + ("Method = " + method)
+            # print("Request-URL = " + request_url)
+            output = output + ("Request-URL = " + request_url)
+            # print("HTTP-Version = " + HTTP_version)
+            output = output + ("HTTP-Version = " + HTTP_version)
             passedFunctions(request_url)
+        print("stuck1")
+        print(output)
+        stap = False
 
 
-main()
+server()
