@@ -39,6 +39,7 @@ for line in lines:
     s.flush()
 
 # read the server response line
+    """
     lent = int(s.readline())
     first_line = s.readline()
     first_line = first_line.replace("\n" , "\r")
@@ -47,8 +48,10 @@ for line in lines:
         y = s.readline()
         y = y.replace("\n", "")
         if (y != " ") and (y != "\n") and (y != " "):
-            print(y)
+            print(y) """
 
+    z = s.readline()
+    print(z)
 
 # close the connection after each request/response
     clientSocket.close()

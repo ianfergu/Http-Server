@@ -1,17 +1,14 @@
-#!/usr/bin/python3
+###############################################################
+#  This code by Ian Ferguson - 10.8.2019                      #
+###############################################################
 
-# Import socket module
 from socket import *
 import sys
 import string
-import io
-import tempfile
-from io import StringIO
 
-# Create a TCP server socket
-#(AF_INET is used for IPv4 protocols)
-#(SOCK_STREAM is used for TCP)
-
+###############################################################
+#  Helper functions are implemented first.                    #
+###############################################################
 
 
 def checkGet(inp):
@@ -19,7 +16,6 @@ def checkGet(inp):
     Checks that the first token is equal
     to 'GET' exactly!
     """
-
     get = "GET"
     out = True
     if len(inp) != 3:
@@ -34,7 +30,6 @@ def checkURL(inp):
     Makes sure that the second token begins with a '/',
     and does not contain any not allowed characters.
     """
-
     out = True
     if inp[0] != "/":
         out = False
@@ -50,7 +45,6 @@ def checkHTTP(inp):
     Makes sure that the third token is in the form:
     'HTTP/#.#'.
     """
-
     try:
         out = True
         if len(inp) != 8:
@@ -76,47 +70,58 @@ def checkSpurious(inp):
     Checks to make sure that there aren't four tokens,
     meaning there is random text after the third.
     """
-
     if len(inp) >= 4:
         return True
     else:
         return False
 
 
-def passedFunctions(inp, output):
+def passedFunctions(inp):
     """
     This function is called when all other tests are passed.
     It checks to see if the URL ends in a recognized string,
     and tries to open them. If it can't, it throws errors
     based on why not.
     """
-    print(output)
+    opt = ''
+    cnt = 0
     if inp.endswith((".htm", ".txt", ".html", ".HTM", ".TXT", ".HTML")):
         try:
             in_file = open(inp[1:], "r")
             text = in_file.readlines()
             for l in text:
-                output.write((l[:len(l)-1] + "\n").encode('utf-8'))
                 # print(l[:len(l)-1])
+                opt += (l[:len(l)-1] + "\n")
+                cnt += 1
         except FileNotFoundError:
             # print("404 Not Found: " + inp)
-            output.write(("404 Not Found: " + inp + "\n").encode('utf-8'))
+            opt += ("404 Not Found: " + inp + "\n")
+            cnt += 1
         except IOError:
             # print(IOError)
-            output.write((IOError + "\n").encode('utf-8'))
+            opt += IOError
+            cnt += 1
     else:
         # print("501 Not Implemented: " + inp)
-        output.write(("501 Not Implemented: " + inp + "\n").encode('utf-8'))
-    return output
+        opt += ("501 Not Implemented: " + inp + "\n")
+        cnt += 1
+    return opt, cnt
 
+###############################################################
+#  This is the main function from part one of                 #
+#  the assignment.                                            #
+###############################################################
 
-def main(new, output):
+def main(new):
     """
     The main function which loops through all lines of input,
     and splits the input into lists by whitespace. It then calls
-    the functions to test the tokens in the input, and prints the
-    results.
+    the functions to test the tokens in the input, and returns
+    the results in one big string, called output.
     """
+    output = ""
+    cnt = 0
+
     stop = True
     while stop:
         new = ''.join(new)
@@ -124,67 +129,74 @@ def main(new, output):
         method = ""
         request_url = ""
         HTTP_version = ""
-        # print(new, end = "")
-        output.write((new + "\r\n"))
-        # tab case
+
+        output += new
+        cnt += 1
+
+        # if it is split by tabs:
         if new.find("\t") > 2:
             new = new.split("\t")
 
-        # catching the case where there is a space in the Get thing.
+        # catching the case where there is a space at the beginning:
         if new[0] == " ":
-            # print("ERROR -- Invalid Method token.")
-            output.write(("ERROR -- Invalid Method token." + '\n').encode('utf-8'))
-            stop = False
-        # base space case
+            output += ("ERROR -- Invalid Method token." + "\n")
+            cnt += 1
+            return output, cnt
+
+        # base space case split.
         new = new.split()
         try:
             method = new[0]
             request_url = new[1]
             HTTP_version = new[2]
         except Exception:
-            return output
+            pass
 
-        if (len(new) == 0) or ((checkGet(method)) == False):
-            # print("ERROR -- Invalid Method token.")
-            output.write(("ERROR -- Invalid Method token." + "\n").encode('utf-8'))
-        elif (len(new) == 1) or ((checkURL(request_url)) == False):
-            # print("ERROR -- Invalid Absolute-Path token.")
-            output.write(("ERROR -- Invalid Absolute-Path token." + "\n").encode('utf-8'))
-        elif (len(new) == 2) or ((checkHTTP(HTTP_version)) == False):
-            # print("ERROR -- Invalid HTTP-Version token.")
-            output.write(("ERROR -- Invalid HTTP-Version token." + "\n").encode('utf-8'))
-        elif (checkSpurious(new)):
-            # print("ERROR -- Spurious token before CRLF.")
-            output.write(("ERROR -- Spurious token before CRLF." + "\n").encode('utf-8'))
+        if (len(new) == 0) or (not (checkGet(method))):
+            output += ("ERROR -- Invalid Method token." + "\n")
+            cnt += 1
+        elif (len(new) == 1) or (not (checkURL(request_url))):
+            output += ("ERROR -- Invalid Absolute-Path token." + "\n")
+            cnt += 1
+        elif (len(new) == 2) or (not (checkHTTP(HTTP_version))):
+            output += ("ERROR -- Invalid HTTP-Version token." + "\n")
+            cnt += 1
+        elif checkSpurious(new):
+            output += ("ERROR -- Spurious token before CRLF." + "\n")
+            cnt += 1
         else:
-            # print("Method = " + method)
-            output.write(("Method = " + method + "\n").encode('utf-8'))
-            # print("Request-URL = " + request_url)
-            output.write(("Request-URL = " + request_url + "\n").encode('utf-8'))
-            # print("HTTP-Version = " + HTTP_version)
-            output.write(("HTTP-Version = " + HTTP_version + "\n").encode('utf-8'))
-            output.write((passedFunctions(request_url, output)).encode('utf-8'))
+            output += ("Method = " + method + "\n")
+            cnt += 1
+            output += ("Request-URL = " + request_url + "\n")
+            cnt += 1
+            output += ("HTTP-Version = " + HTTP_version + "\n")
+            cnt += 1
 
-        print(output.read())
-        return output
-        stop = False
+            ote, count = passedFunctions(request_url)
+            output += ote
+            cnt += count
+        return output, cnt
 
-#####################################
-# This is the main function!!!!!!!! #
-#####################################
+
+###############################################################
+# This is the part of the code that acts as the server.       #
+# It opens the socket, and will loop infinitely looking for   #
+# new connections.  It reads each message, then generates     #
+# the output for the message, and returns it.                 #
+###############################################################
 
 
 serverSocket = socket(AF_INET, SOCK_STREAM)
 
-# Assign a port number
+# Assign a port number from sys.argv
 serverPort = int(sys.argv[1])
 
 # Bind the socket to server address (default this machine)
-# and server port
+# and server port, fail if OSError.
 try:
     serverSocket.bind(("", serverPort))
 except (OSError):
-    print("Connection Error", end="")
+    print("Connection Error")
     sys.exit()
 
 # Listen for at most 1 connection at a time
@@ -194,16 +206,10 @@ serverSocket.listen(1)
 # and listening to the incoming connections
 
 while True:
-
-    # sys.stdout = open('memory.txt', 'wt')
-    output = tempfile.SpooledTemporaryFile(mode = 'w+b', max_size = 100000, encoding= None)
-    output.write(("hellllo").encode("utf-8"))
-    sys.stdout = sys.__stdout__
-    print((output.read()).decode("utf-8"))
-    #Wait for a new connection from the client
-    #and accept it when requested
-    #a new socket for data streams is returned from
-    #the accept method
+    # Wait for a new connection from the client
+    # and accept it when requested
+    # a new socket for data streams is returned from
+    # the accept method
     connectionSocket, addr = serverSocket.accept()
 
     # Make a bidirectional stream (file-like) from socket
@@ -213,29 +219,21 @@ while True:
     # Receives the request message from the client
     message = s.readline()
 
-    # Create upper case version
-    # messageCaps = message.upper()
-    output = main(message, output)
+    # Calls the main function on the given message, and
+    # takes its outputs.
+    output, count = main(message)
+    output = (str(count) + "\n" + output)
 
     # Send back to client
-    # saved = open("memory.txt", "r")
-
-    # sys.stdout = sys.__stdout__
-
-    lines = output.readlines()
-    print(lines)
-
-    for x in lines:
-        s.write(x.decode('utf-8'))
+    sys.stdout = sys.__stdout__
+    s.write(output)
     s.flush()
-    output.close()
 
     # Close the client connection socket
     connectionSocket.close()
 
 serverSocket.close()
-sys.exit()#Terminate the program after sending the corresponding data
-
+sys.exit()
 
 
 
